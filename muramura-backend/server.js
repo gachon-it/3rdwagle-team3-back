@@ -3,7 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-const sttRoutes = require("./routes/stt");
+const sttRoutes = require("./routes/stt"); //api들
+const sttMonthRoutes = require("./routes/sttMonth"); // ✅ 새로운 월별 데이터 라우트 추가
 
 const app = express();
 app.use(cors());
@@ -31,7 +32,7 @@ connectDB();
 
 // 3️.API 라우트 설정
 app.use("/api", sttRoutes);
-// app.use("/api", aiRoutes);  // AI 라우트 추가 예정
+app.use("/api", sttMonthRoutes); // ✅ `sttMonthRoutes` 추가
 
 // 4️.서버 실행
 const PORT = process.env.PORT || 5000;
