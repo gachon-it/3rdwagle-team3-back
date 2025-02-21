@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 
 const SttSchema = new mongoose.Schema({
-    originalFileName: String, // 원본 파일 이름
-    transcript: String,       // STT 변환된 텍스트
-    aiText: String,           // Claude가 수정한 문어체 텍스트
-    aiComment: String,        // AI가 생성한 코멘트
-    emotion: String,          // 감정 데이터 (Flutter에서 전송)
-    createdAt: { type: Date, default: Date.now } // 저장된 시간
+    date: { type: String, required: true }, // 날짜 (예: "2025-01-01")
+    entries: [
+        {
+            content: String,   // STT 변환된 문장
+            emotion: String,   // 감정 데이터
+            comment: String    // AI가 생성한 코멘트
+        }
+    ]
 });
 
-const SttModel = mongoose.model("STTRecord", SttSchema);
+module.exports = mongoose.model("SttModel", SttSchema);
 
-module.exports = SttModel;
