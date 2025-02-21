@@ -1,0 +1,14 @@
+### STT 변환 API 테스트
+POST http://localhost:5000/api/stt
+Content-Type: multipart/form-data
+
+@audio=./test_audio.wav
+
+### AI 감정 분석 API 테스트
+POST http://localhost:5000/api/ai
+Content-Type: application/json
+
+{
+  "text": "오늘 정말 기분 좋은 하루였어!",
+  "emotion": "happy"
+}
