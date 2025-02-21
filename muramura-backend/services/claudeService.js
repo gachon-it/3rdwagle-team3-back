@@ -15,17 +15,21 @@ async function generateComment(text, emotion) {
         const system_prompt = `
         [일기 내용]: "${text}"
         [감정]: "${emotion}"
-        - 문맥이 자연스럽지 않다면 자연스럽게 수정해 주세요.
-        - 공감할 수 있는 AI 코멘트를 2~3문장으로 작성해 주세요.
+        - 먼저 , 일기내용을 구어체에서 문어체로 바꿔주세요. 횡설수설하게 말해도 잘 정리해서 요점만 정리해서요.
+        - 문맥이 자연스럽지 않다면 자연스럽게 수정해 주세요.단 , 개인적인 일기라는걸 생각해서요.
+        - 공감할 수 있는 AI 코멘트를 2문장으로 작성해 주세요.
         - 감정에 맞게 위로나 응원을 담아 주세요.
         - 사용자 친화적인 말투로 작성해 주세요.
+
+        출력 형태를 정확히 정해줄게요.
+        "-바뀐 텍스트 : ~ / -코멘트: ~" 식으로 답해주세요.
         `;
 
         const response = await axios.post(
             CLAUDE_API_URL,
             {
                 model: "claude-3-haiku-20240307",
-                max_tokens: 300,
+                max_tokens: 100,
                 system: "너는 친절한 AI 코멘트 생성기야.",  // 🔥 system 메시지를 개별 필드로 분리
                 messages: [
                     { role: "user", content: system_prompt }
@@ -41,9 +45,9 @@ async function generateComment(text, emotion) {
             }
         );
 
-        //console.log("Claude API 응답:", response.data);
+        console.log("Claude API 응답:", response.data);
 
-        return response.data.content[0].text.trim();
+        return response.data;
 
     } catch (error) {
         console.error("❌ Claude API 호출 오류:", error.response ? error.response.data : error.message);

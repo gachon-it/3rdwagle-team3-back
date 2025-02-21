@@ -54,9 +54,13 @@ router.post("/stt", upload.single("audio"), async (req, res) => {
 
         //ai.js의 기능도 추가
         //텍스트 claude한테 전달 -> claude가 변환한 텍스트 다시 저장 -> 한줄 평도 json형식으로 출력하기
-        const emotion = "happy";
-        const comment = await generateComment(transcript, emotion);
 
+        const emotion = req.body.emotion || "neutral"; // 기본값: "neutral"
+        const comment = await generateComment(transcript, emotion);
+        //const responce = await generateComment(transcript, emotion); //이게 claude에서 받은 풀 텍스트
+        //transcript = ~;
+        //const comment = ~;
+        
         res.json({
             text: transcript,
             comment: comment
