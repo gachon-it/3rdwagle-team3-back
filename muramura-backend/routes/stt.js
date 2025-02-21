@@ -2,9 +2,9 @@ const express = require("express");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const { SpeechClient } = require("@google-cloud/speech");
-const { generateComment } = require("../services/claudeService");  // AI 연동
-
+const { SpeechClient } = require("@google-cloud/speech"); //Google Cloud API 연동
+const { generateComment } = require("../services/claudeService");  // Claude API 연동
+const SttModel = require("../models/SttModel");  // 추가된 Mongoose 모델
 const router = express.Router();
 
 // Google Cloud STT 설정
@@ -20,7 +20,6 @@ if (!fs.existsSync(textSavePath)) {
 // 파일 업로드 설정 (메모리 저장)
 const upload = multer({ storage: multer.memoryStorage() });
 
-//Claude 응답을 파싱하는 함수 추가
 function parseClaudeResponse(response) {
     try {
         if (!response || !response.content || !response.content[0] || !response.content[0].text) {
@@ -29,18 +28,21 @@ function parseClaudeResponse(response) {
 
         const responseText = response.content[0].text;
 
-        const textMatch = responseText.match(/-바뀐 텍스트\s*:\s*(.*)/s);
-        const text = textMatch ? textMatch[1].split("\n")[0].trim() : "변환된 텍스트 없음";
+        // `-바뀐 텍스트` 뒤의 내용을 가져오기
+        const textMatch = responseText.match(/-바뀐 텍스트\s*:\s*([\s\S]+?)(?=\n-\s*코멘트|$)/);
+        const text = textMatch ? textMatch[1].trim() : "변환된 텍스트 없음";
 
-        const commentMatch = responseText.match(/-코멘트\s*:\s*(.*)/s);
+        // `-코멘트` 뒤의 내용을 가져오기
+        const commentMatch = responseText.match(/-코멘트\s*:\s*([\s\S]+)/);
         const comment = commentMatch ? commentMatch[1].trim() : "AI 코멘트 없음";
 
         return { text, comment };
     } catch (error) {
-        console.error("Claude 응답 파싱 오류:", error);
+        console.error("Claude 응답 파싱 오류:", error.message, "\nStack Trace:", error.stack);
         return { text: "변환된 텍스트 없음", comment: "AI 코멘트 없음" };
     }
 }
+
 
 // STT + AI 변환 API
 router.post("/stt", upload.single("audio"), async (req, res) => {
@@ -62,6 +64,14 @@ router.post("/stt", upload.single("audio"), async (req, res) => {
                 encoding: "LINEAR16",
                 sampleRateHertz: 44100,
                 languageCode: "ko-KR",
+                speechContexts: [
+                    {
+                        phrases: [
+                            "해커톤","친구","행복"
+                        ],
+                        boost: 15.0
+                    }
+                ]
             },
         };
 
@@ -83,6 +93,17 @@ router.post("/stt", upload.single("audio"), async (req, res) => {
         // Claude 응답을 파싱하여 변환된 텍스트 & 코멘트 분리
         const parsedResponse = parseClaudeResponse(aiResponse);
 
+        // MongoDB에 저장
+        const newRecord = new SttModel({
+            originalFileName: originalFileName,
+            transcript: transcript,
+            aiText: parsedResponse.text,
+            aiComment: parsedResponse.comment,
+            emotion: emotion,
+        });
+
+        await newRecord.save();
+        console.log("MongoDB 저장 완료");
 
         res.json({
             text: parsedResponse.text,   // 변환된 문어체 일기
