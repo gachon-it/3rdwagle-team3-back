@@ -4,6 +4,7 @@ const cors = require("cors");
 const sttRoutes = require("./routes/stt");
 const aiRoutes = require("./routes/ai");
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());
