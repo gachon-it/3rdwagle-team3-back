@@ -20,7 +20,7 @@ if (!fs.existsSync(textSavePath)) {
 // 파일 업로드 설정 (메모리 저장)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ✅ Claude 응답을 파싱하는 함수 추가
+//Claude 응답을 파싱하는 함수 추가
 function parseClaudeResponse(response) {
     try {
         if (!response || !response.content || !response.content[0] || !response.content[0].text) {
@@ -37,19 +37,19 @@ function parseClaudeResponse(response) {
 
         return { text, comment };
     } catch (error) {
-        console.error("❌ Claude 응답 파싱 오류:", error);
+        console.error("Claude 응답 파싱 오류:", error);
         return { text: "변환된 텍스트 없음", comment: "AI 코멘트 없음" };
     }
 }
 
-// ✅ STT + AI 변환 API
+// STT + AI 변환 API
 router.post("/stt", upload.single("audio"), async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: "❌ 파일이 없습니다." });
+            return res.status(400).json({ message: "파일이 없습니다." });
         }
 
-        console.log("✅ 오디오 파일 업로드 완료");
+        console.log("오디오 파일 업로드 완료");
 
         // STT 변환
         const originalFileName = req.file.originalname.split(".")[0];
@@ -65,32 +65,36 @@ router.post("/stt", upload.single("audio"), async (req, res) => {
             },
         };
 
-        console.log("✅ Google STT API 요청 시작...");
+        console.log("Google STT API 요청 시작...");
         const [response] = await client.recognize(request);
         const transcript = response.results.map(result => result.alternatives[0].transcript).join("\n");
 
-        console.log("✅ STT 변환 완료:", transcript);
+        console.log("STT 변환 완료:", transcript);
         fs.writeFileSync(textFilePath, transcript, "utf8");
 
-        // ✅ 요청 바디에서 emotion 값을 가져오기 (Flutter에서 보냄)
+        // 요청 바디에서 emotion 값을 가져오기 (Flutter에서 보냄)
         const emotion = req.body.emotion || "neutral"; // 기본값: "neutral"
-        console.log(`✅ 감정 데이터 수신: ${emotion}`);
+        console.log(` 감정 데이터 수신: ${emotion}`);
 
         // AI 변환 요청
         const aiResponse = await generateComment(transcript, emotion);
-        console.log("✅ Claude AI 응답 수신:", aiResponse);
+        console.log("Claude API 응답 수신 완료");
 
-        // ✅ Claude 응답을 파싱하여 변환된 텍스트 & 코멘트 분리
+        // Claude 응답을 파싱하여 변환된 텍스트 & 코멘트 분리
         const parsedResponse = parseClaudeResponse(aiResponse);
+
 
         res.json({
             text: parsedResponse.text,   // 변환된 문어체 일기
             comment: parsedResponse.comment  // AI 코멘트
         });
 
+        //log 추가
+        console.log("API 정상 작동 완료");
+
     } catch (error) {
-        console.error("❌ 변환 실패 상세 오류:", error);
-        res.status(500).json({ message: "❌ 변환 실패", error: error.message });
+        console.error("변환 실패 상세 오류:", error);
+        res.status(500).json({ message: "변환 실패", error: error.message });
     }
 });
 

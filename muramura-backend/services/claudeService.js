@@ -4,12 +4,12 @@ const axios = require("axios");
 const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 const API_KEY = process.env.CLAUDE_API_KEY;
 
-console.log("Claude API Key:", API_KEY ? "✅ Loaded" : "❌ Not Found");
+console.log("Claude API Key:", API_KEY ? "Loaded" : "Not Found");
 
 async function generateComment(text, emotion) {
     try {
         if (!API_KEY) {
-            throw new Error("❌ Claude API Key가 설정되지 않았습니다.");
+            throw new Error("Claude API Key가 설정되지 않았습니다.");
         }
 
         const system_prompt = `
@@ -29,8 +29,8 @@ async function generateComment(text, emotion) {
             CLAUDE_API_URL,
             {
                 model: "claude-3-haiku-20240307",
-                max_tokens: 100,
-                system: "너는 친절한 AI 코멘트 생성기야.",  // 🔥 system 메시지를 개별 필드로 분리
+                max_tokens: 150,
+                system: "너는 친절한 AI 코멘트 생성기야.",  // system 메시지를 개별 필드로 분리
                 messages: [
                     { role: "user", content: system_prompt }
                 ]
@@ -45,12 +45,12 @@ async function generateComment(text, emotion) {
             }
         );
 
-        console.log("Claude API 응답:", response.data);
+        console.log("Claude API 응답 stt.js에 전송");
 
         return response.data;
 
     } catch (error) {
-        console.error("❌ Claude API 호출 오류:", error.response ? error.response.data : error.message);
+        console.error("Claude API 호출 오류:", error.response ? error.response.data : error.message);
         return "AI 코멘트를 생성하는 중 오류가 발생했습니다.";
     }
 }
