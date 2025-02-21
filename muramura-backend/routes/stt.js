@@ -3,6 +3,7 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const { SpeechClient } = require("@google-cloud/speech");
+const { generateComment } = require("../services/claudeService"); //ai.js 이식하기
 
 const router = express.Router();
 
@@ -10,10 +11,10 @@ const router = express.Router();
 const keyFilePath = path.join(__dirname, "../key-polymer-451605-f2-5678117962df.json");
 const client = new SpeechClient({ keyFilename: keyFilePath });
 
-// 변환된 텍스트 저장 폴더 경로
+// 변환된 텍스트 저장 폴더 경로 (지금은 upload지만 flutter연동하면서 바뀔 수 있음)
 const textSavePath = "uploads/texts/";
 
-// 폴더가 없으면 생성
+// 폴더가 없으면 생성(위와 동일)
 if (!fs.existsSync(textSavePath)) {
     fs.mkdirSync(textSavePath, { recursive: true });
 }
@@ -51,16 +52,22 @@ router.post("/stt", upload.single("audio"), async (req, res) => {
         // 변환된 텍스트를 파일로 저장
         fs.writeFileSync(textFilePath, transcript, "utf8");
 
-        res.json({
-            message: "✅ 변환 완료!",
-            text: transcript,
-            filePath: textFilePath // 클라이언트가 저장된 텍스트 파일 경로를 알 수 있도록 반환
-        });
+        //ai.js의 기능도 추가
+        //텍스트 claude한테 전달 -> claude가 변환한 텍스트 다시 저장 -> 한줄 평도 json형식으로 출력하기
+        const emotion = "happy";
+        const comment = await generateComment(transcript, emotion);
 
+        res.json({
+            text: transcript,
+            comment: comment
+        });
+       
     } catch (error) {
-        console.error("❌ STT 변환 실패:", error);
+        console.error("❌ 변환 실패 상세 오류:", error); // 오류 로그 출력
         res.status(500).json({ message: "❌ 변환 실패", error: error.message });
     }
+    
+    
 });
 
 module.exports = router;
